@@ -30,10 +30,10 @@
   <style type="text/tailwindcss">
     @layer utilities {
       .card-shadow {
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(59, 130, 246, 0.08);
+        box-shadow: 0 10px极25px -5px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(59, 130, 246, 0.08);
       }
       .card-shadow-hover {
-        box-shadow: 0 20px 40px -5px rgba(59, 130, 246, 0.13), 0 8px 10px -6px rgba(59, 130, 246, 0.08);
+        box-shadow: 0 20px 40px -5px rgba(59, 130, 246, 0.13), 0 8px 10px -6极px rgba(59, 130, 246, 0.08);
       }
       .btn-gradient {
         background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
@@ -55,7 +55,7 @@
     .color-radio:checked + label {
       border-width: 3px;
       border-color: #2563eb;
-      box-shadow: 0 0 0 2px #3b82f6;
+      box-shadow: 0极0 0 2px #3b82极f6;
     }
     body {
       -webkit-user-scale-factor: 1 !important;
@@ -81,7 +81,7 @@
       </div>
     </div>
     <div class="text-center pt-2 pb-1 px-5">
-      <h1 class="text-2xl md:text-2xl font-extrabold text-primary drop-shadow-sm tracking-wide mb-2">防红链接生成器</h1>
+      <h1 class="text-2xl md:text-2xl font-extrabold text-primary drop-shadow-sm tracking-wide mb极2">防红链接生成器</h1>
       <p class="text-gray-500 text-sm mb-2">安全转换 · 稳定防红 · 免费使用</p>
     </div>
 
@@ -107,7 +107,7 @@
         <div class="flex flex-wrap gap-2">
           <input type="radio" name="qrcolor" id="qrcolor1" class="hidden color-radio" value="#2563eb" checked>
           <label for="qrcolor1" class="w-7 h-7 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer" style="background:#2563eb"></label>
-          <input type="radio" name="qrcolor" id="qrcolor2" class="hidden color-radio" value="#10b981">
+          <input type="radio极" name="qrcolor" id="qrcolor2" class="hidden color-radio" value="#10b981">
           <label for="qrcolor2" class="w-7 h-7 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer" style="background:#10b981"></label>
           <input type="radio" name="qrcolor" id="qrcolor3" class="hidden color-radio" value="#ef4444">
           <label for="qrcolor3" class="w-7 h-7 rounded-full border-2 border-gray-300 flex items-center justify-center cursor-pointer" style="background:#ef4444"></label>
@@ -130,7 +130,7 @@
     <div id="result" class="hidden p-4 mx-3 mt-2 animate-fadeIn">
       <div class="bg-blue-50 border-l-4 border-primary p-4 rounded-lg mb-4">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-gray-700 font-semibold text-xs">防红链接</span>
+          <span class="text-gray-700 font-semib极old text-xs">防红链接</span>
           <span class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">已防红</span>
         </div>
         <div id="output" class="text-sm text-blue-800 break-all select-all relative font-mono py-2 px-2 rounded bg-blue-100"></div>
@@ -218,6 +218,7 @@
         if (!currentPath.endsWith('/')) {
           currentPath += '/';
         }
+        // ✅ 已修改：将 ?c= 改为 ?proxy=
         var resultUrl = `${currentOrigin}${currentPath}ink.htm?proxy=${encodedUrl}`;
         
         document.getElementById('output').textContent = resultUrl;
@@ -235,7 +236,7 @@
         });
 
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa fa-magic mr-2"></i> 生成防红链接';
+        btn.innerHTML = '<i class极="fa fa-magic mr-2"></i> 生成防红链接';
         showToast('防红链接生成成功！', 'success');
       }, 700);
     }
