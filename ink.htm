@@ -2,160 +2,86 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>安全跳转页面</title>
-  <style>
-    /* 三点加载动画样式 */
-    .container {
-      width: 100px;
-      height: 100px;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      animation: rotate-move 2s ease-in-out infinite;
-      display: none;
-    }
-    .dot {
-      width: 15px;
-      height: 15px;
-      border-radius: 50%;
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      margin: auto;
-    }
-    .dot-3 { background-color: #f74d75; animation: dot-3-move 2s ease infinite; }
-    .dot-2 { background-color: #10beae; animation: dot-2-move 2s ease infinite; }
-    .dot-1 { background-color: #ffe386; animation: dot-1-move 2s ease infinite; }
-    
-    @keyframes dot-3-move {
-      20%,100% { transform: scale(1) }
-      45%,80% { transform: translateY(-18px) scale(.45) }
-    }
-    @keyframes dot-2-move {
-      20%,100% { transform: scale(1) }
-      45%,80% { transform: translate(-16px, 12px) scale(.45) }
-    }
-    @keyframes dot-1-move {
-      20%,100% { transform: scale(1) }
-      45%,80% { transform: translate(16px, 12px) scale(.45) }
-    }
-    @keyframes rotate-move {
-      55% { transform: translate(-50%, -50%) rotate(0deg) }
-      80%,100% { transform: translate(-50%, -50%) rotate(360deg) }
-    }
-
-    /* 全局水印样式 */
-    .watermark {
-      position: fixed;
-      pointer-events: none;
-      width: 100%;
-      height: 100%;
-      background-image: repeating-linear-gradient(
-        -45deg,
-        rgba(255, 0, 0, 0.1),
-        rgba(255, 0, 0, 0.1) 20px,
-        rgba(0, 0, 255, 0.1) 20px,
-        rgba(0, 0, 255, 0.1) 40px
-      );
-      z-index: 9999;
-      display: none;
-    }
-    .watermark-text {
-      position: absolute;
-      color: rgba(255, 0, 0, 0.6);
-      font-size: 18px;
-      font-weight: bold;
-      text-align: center;
-      width: 100%;
-      top: 50%;
-      transform: translateY(-50%);
-      text-shadow: 1px 1px 1px #fff;
-    }
-
-    /* iframe样式 */
-    .content {
-      height: 100%;
-      width: 100%;
-      position: fixed;
-      inset: -2px;
-      z-index: 1;
-    }
-  </style>
+  <title>链接代理访问</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
 <body>
-  <!-- 三点加载动画容器 -->
-  <div class="container" id="loadingContainer">
-    <div class="dot dot-1"></div>
-    <div class="dot dot-2"></div>
-    <div class="dot dot-3"></div>
-  </div>
-
-  <!-- 全局水印 -->
-  <div class="watermark" id="watermark">
-    <div class="watermark-text">提示：请联系iOS小萝卜</div>
+  <div id="app">
+    <div style="text-align: center; padding: 50px 20px;">
+      <div style="font-size: 48px; margin-bottom: 20px;">🌐</div>
+      <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">代理访问中</h1>
+      <p style="color: #666; margin-bottom: 30px;">正在通过安全代理加载内容...</p>
+      <div id="status">初始化代理服务</div>
+    </div>
   </div>
 
   <script>
-    (function() {
-      // 这里不再有白名单限制
-      const WATERMARK_TEXT = '提示：请联系iOS小萝卜';
-
-      // 显示三点加载动画
-      function showLoadingAnimation() {
-        document.getElementById('loadingContainer').style.display = 'block';
-      }
-
-      // 主处理逻辑
-      function processRedirect() {
-        showLoadingAnimation();
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const encodedParam = urlParams.get('c');
-        
-        if (!encodedParam) {
-          document.getElementById('watermark').style.display = 'block';
-          document.getElementById('loadingContainer').style.display = 'none';
-          return;
-        }
-        
+    async function setupProxy(targetUrl) {
+      if ('serviceWorker' in navigator) {
         try {
-          const trueUrl = atob(encodedParam);
-          if (trueUrl.includes("http")) {
-            // 直接加载iframe，不判断域名
-            const iframe = document.createElement('iframe');
-            iframe.className = 'content';
-            iframe.src = trueUrl;
-            
-            iframe.addEventListener('load', function() {
-              document.getElementById('loadingContainer').style.display = 'none';
+          const registration = await navigator.serviceWorker.register('/sw-proxy.js', {
+            scope: '/'
+          });
+          
+          console.log('Service Worker 注册成功');
+          
+          if (registration.active) {
+            registration.active.postMessage({
+              type: 'SET_TARGET_URL',
+              url: targetUrl
             });
-            
-            document.body.appendChild(iframe);
           }
-        } catch (e) {
-          console.error('URL解码失败:', e);
-          document.getElementById('watermark').style.display = 'block';
-          document.getElementById('loadingContainer').style.display = 'none';
+          
+          await navigator.serviceWorker.ready;
+          window.location.href = '/proxy/';
+          
+        } catch (error) {
+          console.error('Service Worker 注册失败:', error);
+          fallbackRedirect(targetUrl);
         }
+      } else {
+        fallbackRedirect(targetUrl);
+      }
+    }
+
+    function fallbackRedirect(url) {
+      document.getElementById('status').textContent = '使用备用方案跳转...';
+      setTimeout(() => {
+        window.location.href = url;
+      }, 2000);
+    }
+
+    function base64Decode(str) {
+      try {
+        return decodeURIComponent(escape(atob(str)));
+      } catch (e) {
+        return null;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const encodedUrl = urlParams.get('proxy');
+      
+      if (!encodedUrl) {
+        document.getElementById('status').textContent = '错误：缺少代理参数';
+        return;
       }
 
-      // 禁止F12开发者工具
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'F12' || 
-            (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-            (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-            (e.ctrlKey && e.key === 'U')) {
-          e.preventDefault();
-        }
-      });
+      const targetUrl = base64Decode(encodedUrl);
+      
+      if (!targetUrl || !/^(https?|ftp):\/\//i.test(targetUrl)) {
+        document.getElementById('status').textContent = '错误：无效的目标URL';
+        return;
+      }
 
-      processRedirect();
-    })();
+      document.getElementById('status').textContent = `代理目标: ${targetUrl}`;
+      
+      setTimeout(() => {
+        setupProxy(targetUrl);
+      }, 1000);
+    });
   </script>
 </body>
 </html>
