@@ -13,39 +13,72 @@
       <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 20px;">代理访问中</h1>
       <p style="color: #666; margin-bottom: 30px;">正在通过安全代理加载内容...</p>
       <div id="status">初始化代理服务</div>
+      <div id="debug" style="font-size: 12px; color: #999; margin-top: 20px;"></div>
     </div>
   </div>
 
   <script>
+    // 调试信息输出
+    function debugLog(message) {
+      console.log(message);
+      const debugEl = document.getElementById('debug');
+      if (debugEl) {
+        debugEl.innerHTML += message + '<br>';
+      }
+    }
+
     async function setupProxy(targetUrl) {
+      debugLog('开始设置代理...');
+      
       if ('serviceWorker' in navigator) {
         try {
-          const registration = await navigator.serviceWorker.register('/sw-proxy.js', {
-            scope: '/'
+          debugLog('注册Service Worker...');
+          const registration = await navigator.serviceWorker.register('sw-proxy.js', {
+            scope: '/yingxiongwang/'
           });
           
-          console.log('Service Worker 注册成功');
+          debugLog('Service Worker 注册成功');
           
+          // 等待Service Worker激活
+          await new Promise(resolve => {
+            if (registration.active) {
+              resolve();
+            } else {
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'activated') {
+                    resolve();
+                  }
+                });
+              });
+            }
+          });
+
+          debugLog('发送目标URL给Service Worker...');
           if (registration.active) {
             registration.active.postMessage({
               type: 'SET_TARGET_URL',
               url: targetUrl
             });
           }
-          
-          await navigator.serviceWorker.ready;
-          window.location.href = '/proxy/';
+
+          debugLog('重定向到代理页面...');
+          // 直接重定向到代理页面
+          window.location.href = targetUrl;
           
         } catch (error) {
-          console.error('Service Worker 注册失败:', error);
+          debugLog('Service Worker 注册失败: ' + error.message);
           fallbackRedirect(targetUrl);
         }
       } else {
+        debugLog('浏览器不支持Service Worker');
         fallbackRedirect(targetUrl);
       }
     }
 
     function fallbackRedirect(url) {
+      debugLog('使用备用方案跳转...');
       document.getElementById('status').textContent = '使用备用方案跳转...';
       setTimeout(() => {
         window.location.href = url;
@@ -56,26 +89,34 @@
       try {
         return decodeURIComponent(escape(atob(str)));
       } catch (e) {
+        debugLog('Base64解码失败: ' + e.message);
         return null;
       }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+      debugLog('页面加载完成');
+      
       const urlParams = new URLSearchParams(window.location.search);
-      const encodedUrl = urlParams.get('proxy');
+      // 同时支持 c 和 proxy 参数
+      const encodedUrl = urlParams.get('proxy') || urlParams.get('c');
       
       if (!encodedUrl) {
+        debugLog('错误：缺少代理参数');
         document.getElementById('status').textContent = '错误：缺少代理参数';
         return;
       }
 
+      debugLog('编码的URL: ' + encodedUrl);
       const targetUrl = base64Decode(encodedUrl);
       
       if (!targetUrl || !/^(https?|ftp):\/\//i.test(targetUrl)) {
+        debugLog('错误：无效的目标URL: ' + targetUrl);
         document.getElementById('status').textContent = '错误：无效的目标URL';
         return;
       }
 
+      debugLog('目标URL: ' + targetUrl);
       document.getElementById('status').textContent = `代理目标: ${targetUrl}`;
       
       setTimeout(() => {
